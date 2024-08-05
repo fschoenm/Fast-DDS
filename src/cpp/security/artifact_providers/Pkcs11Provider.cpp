@@ -34,7 +34,7 @@
 
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 namespace detail {
@@ -57,7 +57,7 @@ static int ui_read(
         case UIT_PROMPT:
         case UIT_VERIFY:
         {
-            logWarning(PKCS11_PROVIDER, "PKCS#11 engine is asking: " << UI_get0_output_string(uis));
+            EPROSIMA_LOG_WARNING(PKCS11_PROVIDER, "PKCS#11 engine is asking: " << UI_get0_output_string(uis));
             // Return an empty password without asking the user
             UI_set_result(ui, uis, "");
             return 1;
@@ -100,7 +100,7 @@ Pkcs11Provider::Pkcs11Provider()
 
     // Load the PIN from the environment
     std::string pin;
-    if (ReturnCode_t::RETCODE_OK == SystemInfo::get_env(FASTDDS_PKCS11_PIN, pin))
+    if (fastdds::dds::RETCODE_OK == SystemInfo::get_env(FASTDDS_PKCS11_PIN, pin))
     {
         if (!ENGINE_ctrl_cmd_string( pkcs11_, "PIN", pin.c_str(), 0))
         {
@@ -167,5 +167,5 @@ EVP_PKEY* Pkcs11Provider::load_private_key(
 } // namespace detail
 } // namespace security
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

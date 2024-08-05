@@ -15,6 +15,8 @@
 #ifndef _FASTDDS_TCP_CHANNEL_RESOURCE_SECURE_
 #define _FASTDDS_TCP_CHANNEL_RESOURCE_SECURE_
 
+#define OPENSSL_API_COMPAT 10101
+
 #include <asio.hpp>
 #include <asio/ssl.hpp>
 #include <asio/strand.hpp>
@@ -52,24 +54,34 @@ public:
     void disconnect() override;
 
     uint32_t read(
-            fastrtps::rtps::octet* buffer,
+            octet* buffer,
             std::size_t size,
             asio::error_code& ec) override;
 
     size_t send(
-            const fastrtps::rtps::octet* header,
+            const octet* header,
             size_t header_size,
-            const fastrtps::rtps::octet* data,
-            size_t size,
+            const std::vector<NetworkBuffer>& buffers,
+            uint32_t total_bytes,
             asio::error_code& ec) override;
 
+    // Throwing asio calls
     asio::ip::tcp::endpoint remote_endpoint() const override;
     asio::ip::tcp::endpoint local_endpoint() const override;
+
+    // Non-throwing asio calls
+    asio::ip::tcp::endpoint remote_endpoint(
+            asio::error_code& ec) const override;
+    asio::ip::tcp::endpoint local_endpoint(
+            asio::error_code& ec) const override;
 
     void set_options(
             const TCPTransportDescriptor* options) override;
 
     void set_tls_verify_mode(
+            const TCPTransportDescriptor* options);
+
+    void set_tls_sni(
             const TCPTransportDescriptor* options);
 
     void cancel() override;

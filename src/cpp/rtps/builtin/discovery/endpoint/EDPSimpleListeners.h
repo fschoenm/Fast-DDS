@@ -21,19 +21,20 @@
 #define EDPSIMPLELISTENER_H_
 #ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC
 
-#include <fastdds/rtps/builtin/data/ReaderProxyData.h>
-#include <fastdds/rtps/builtin/data/WriterProxyData.h>
+#include <fastdds/rtps/reader/ReaderListener.hpp>
+#include <fastdds/rtps/writer/WriterListener.hpp>
 
-#include <fastdds/rtps/builtin/discovery/endpoint/EDPSimple.h>
-
-#include <fastdds/rtps/reader/ReaderListener.h>
-#include <fastdds/rtps/writer/WriterListener.h>
-
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <rtps/builtin/discovery/endpoint/EDPSimple.h>
 #include <rtps/participant/RTPSParticipantImpl.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
+
+using EndpointAddedCallback = std::function<
+    void (RTPSReader* reader, const CacheChange_t* change)>;
 
 class RTPSReader;
 struct CacheChange_t;
@@ -68,15 +69,7 @@ class EDPBasePUBListener : public EDPListener
 {
 public:
 
-    EDPBasePUBListener(
-            const RemoteLocatorsAllocationAttributes& locators_allocation,
-            const VariableLengthDataLimits& data_limits)
-        : temp_writer_data_(
-            locators_allocation.max_unicast_locators,
-            locators_allocation.max_multicast_locators,
-            data_limits)
-    {
-    }
+    EDPBasePUBListener() = default;
 
     virtual ~EDPBasePUBListener() = default;
 
@@ -87,10 +80,9 @@ protected:
             ReaderHistory* reader_history,
             CacheChange_t* change,
             EDP* edp,
-            bool release_change = true);
-
-    //!Temporary structure to avoid allocations
-    WriterProxyData temp_writer_data_;
+            bool release_change = true,
+            const EndpointAddedCallback& writer_added_callback = nullptr
+            );
 };
 
 /**
@@ -101,17 +93,7 @@ class EDPBaseSUBListener : public EDPListener
 {
 public:
 
-    EDPBaseSUBListener(
-            const RemoteLocatorsAllocationAttributes& locators_allocation,
-            const VariableLengthDataLimits& data_limits,
-            const fastdds::rtps::ContentFilterProperty::AllocationConfiguration& filter_allocation)
-        : temp_reader_data_(
-            locators_allocation.max_unicast_locators,
-            locators_allocation.max_multicast_locators,
-            data_limits,
-            filter_allocation)
-    {
-    }
+    EDPBaseSUBListener() = default;
 
     virtual ~EDPBaseSUBListener() = default;
 
@@ -122,10 +104,9 @@ protected:
             ReaderHistory* reader_history,
             CacheChange_t* change,
             EDP* edp,
-            bool release_change = true);
-
-    //!Temporary structure to avoid allocations
-    ReaderProxyData temp_reader_data_;
+            bool release_change = true,
+            const EndpointAddedCallback& reader_added_callback = nullptr
+            );
 };
 
 /*!
@@ -142,9 +123,7 @@ public:
      */
     EDPSimplePUBListener(
             EDPSimple* sedp)
-        : EDPBasePUBListener(sedp->mp_RTPSParticipant->getAttributes().allocation.locators,
-                sedp->mp_RTPSParticipant->getAttributes().allocation.data_limits)
-        , sedp_(sedp)
+        : sedp_(sedp)
     {
     }
 
@@ -155,7 +134,7 @@ public:
      * @param reader
      * @param change
      */
-    void onNewCacheChangeAdded(
+    void on_new_cache_change_added(
             RTPSReader* reader,
             const CacheChange_t* const change) override;
 
@@ -166,7 +145,7 @@ public:
      * @param writer Pointer to the RTPSWriter.
      * @param change Pointer to the affected CacheChange_t.
      */
-    void onWriterChangeReceivedByAll(
+    void on_writer_change_received_by_all(
             RTPSWriter* writer,
             CacheChange_t* change) override;
 
@@ -190,10 +169,7 @@ public:
      */
     EDPSimpleSUBListener(
             EDPSimple* sedp)
-        : EDPBaseSUBListener(sedp->mp_RTPSParticipant->getAttributes().allocation.locators,
-                sedp->mp_RTPSParticipant->getAttributes().allocation.data_limits,
-                sedp->mp_RTPSParticipant->getAttributes().allocation.content_filter)
-        , sedp_(sedp)
+        : sedp_(sedp)
     {
     }
 
@@ -203,7 +179,7 @@ public:
      * @param reader
      * @param change
      */
-    void onNewCacheChangeAdded(
+    void on_new_cache_change_added(
             RTPSReader* reader,
             const CacheChange_t* const change) override;
 
@@ -213,7 +189,7 @@ public:
      * @param writer Pointer to the RTPSWriter.
      * @param change Pointer to the affected CacheChange_t.
      */
-    void onWriterChangeReceivedByAll(
+    void on_writer_change_received_by_all(
             RTPSWriter* writer,
             CacheChange_t* change) override;
 
@@ -224,7 +200,7 @@ private:
 };
 
 } /* namespace rtps */
-} /* namespace fastrtps */
+} /* namespace fastdds */
 } /* namespace eprosima */
 
 #endif // ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC

@@ -12,32 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <fastrtps/rtps/builtin/data/WriterProxyData.h>
-#include <fastrtps/rtps/builtin/data/ReaderProxyData.h>
-#include <fastrtps/xmlparser/XMLEndpointParser.h>
-#include <fastdds/dds/log/Log.hpp>
-#include <fastdds/dds/log/OStreamConsumer.hpp>
-#include <fastdds/dds/log/FileConsumer.hpp>
-#include <fastdds/dds/log/StdoutConsumer.hpp>
-#include <fastdds/dds/log/StdoutErrConsumer.hpp>
-#include "../logging/mock/MockConsumer.h"
-
-#include <tinyxml2.h>
-#include <gtest/gtest.h>
-
-#include <string>
 #include <fstream>
 #include <sstream>
+#include <string>
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+#include <gtest/gtest.h>
+#include <tinyxml2.h>
+
+#include <fastdds/dds/log/FileConsumer.hpp>
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/dds/log/OStreamConsumer.hpp>
+#include <fastdds/dds/log/StdoutConsumer.hpp>
+#include <fastdds/dds/log/StdoutErrConsumer.hpp>
+
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <xmlparser/XMLEndpointParser.h>
+
+#include "../logging/mock/MockConsumer.h"
+
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 using namespace ::testing;
 
-using eprosima::fastrtps::xmlparser::XMLP_ret;
-using eprosima::fastrtps::xmlparser::XMLEndpointParser;
-using eprosima::fastrtps::xmlparser::StaticRTPSParticipantInfo;
-using eprosima::fastrtps::rtps::ReaderProxyData;
-using eprosima::fastrtps::rtps::WriterProxyData;
+using eprosima::fastdds::xmlparser::XMLP_ret;
+using eprosima::fastdds::xmlparser::XMLEndpointParser;
+using eprosima::fastdds::xmlparser::StaticRTPSParticipantInfo;
+using eprosima::fastdds::rtps::ReaderProxyData;
+using eprosima::fastdds::rtps::WriterProxyData;
 
 using eprosima::fastdds::dds::Log;
 using eprosima::fastdds::dds::LogConsumer;
@@ -122,7 +124,7 @@ TEST_F(XMLEndpointParserTests, loadXMLNode)
                         <reader>\
                             <userId>3</userId>\
                             <entityID>4</entityID>\
-                            <expectsInlineQos>true</expectsInlineQos>\
+                            <expects_inline_qos>true</expects_inline_qos>\
                             <topicName>HelloWorldTopic</topicName>\
                             <topicDataType>HelloWorld</topicDataType>\
                             <topicKind>WITH_KEY</topicKind>\
@@ -205,7 +207,7 @@ TEST_F(XMLEndpointParserTests, loadXMLParticipantEndpoint)
                     <reader>\
                         <userId>3</userId>\
                         <entityID>4</entityID>\
-                        <expectsInlineQos>true</expectsInlineQos>\
+                        <expects_inline_qos>true</expects_inline_qos>\
                         <topicName>HelloWorldTopic</topicName>\
                         <topicDataType>HelloWorld</topicDataType>\
                         <topicKind>WITH_KEY</topicKind>\
@@ -245,13 +247,14 @@ TEST_F(XMLEndpointParserTests, loadXMLParticipantEndpoint)
                     <%s>bad_value</%s>\
                 </participant>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         std::vector<std::string> test_tags = {"reader", "writer", "bad_element"};
 
         for (const std::string& tag : test_tags)
         {
-            sprintf(xml, xml_p, tag.c_str(), tag.c_str());
+            snprintf(xml, xml_len, xml_p, tag.c_str(), tag.c_str());
             ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
             titleElement = xml_doc.FirstChildElement();
             mp_edpXML->loadXMLParticipantEndpoint(titleElement, pdata);
@@ -296,7 +299,7 @@ TEST_F(XMLEndpointParserTests, loadXMLReaderEndpoint)
                 <reader>\
                     <userId>3</userId>\
                     <entityID>4</entityID>\
-                    <expectsInlineQos>true</expectsInlineQos>\
+                    <expects_inline_qos>true</expects_inline_qos>\
                     <topicName>HelloWorldTopic</topicName>\
                     <topicDataType>HelloWorld</topicDataType>\
                     <topicKind>WITH_KEY</topicKind>\
@@ -338,10 +341,10 @@ TEST_F(XMLEndpointParserTests, loadXMLReaderEndpoint)
         EXPECT_EQ(pdata->m_readers[0]->remote_locators().multicast[0],  multi_loc);
 
         // qos
-        EXPECT_EQ(pdata->m_readers[0]->m_qos.m_reliability.kind,  BEST_EFFORT_RELIABILITY_QOS);
-        EXPECT_EQ(pdata->m_readers[0]->m_qos.m_durability.kind,  VOLATILE_DURABILITY_QOS);
-        EXPECT_EQ(pdata->m_readers[0]->m_qos.m_ownership.kind,  SHARED_OWNERSHIP_QOS);
-        EXPECT_EQ(pdata->m_readers[0]->m_qos.m_liveliness.kind,  AUTOMATIC_LIVELINESS_QOS);
+        EXPECT_EQ(pdata->m_readers[0]->m_qos.m_reliability.kind,  dds::BEST_EFFORT_RELIABILITY_QOS);
+        EXPECT_EQ(pdata->m_readers[0]->m_qos.m_durability.kind,  dds::VOLATILE_DURABILITY_QOS);
+        EXPECT_EQ(pdata->m_readers[0]->m_qos.m_ownership.kind,  dds::SHARED_OWNERSHIP_QOS);
+        EXPECT_EQ(pdata->m_readers[0]->m_qos.m_liveliness.kind,  dds::AUTOMATIC_LIVELINESS_QOS);
         EXPECT_TRUE(pdata->m_readers[0]->m_qos.m_disablePositiveACKs.enabled);
 
         // Delete the ReaderProxyData created inside loadXMLParticipantEndpoint
@@ -362,39 +365,40 @@ TEST_F(XMLEndpointParserTests, loadXMLReaderEndpoint)
                     <livelinessQos kind=\"%s\" leaseDuration_ms=\"%s\"/>\
                 </reader>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "AUTOMATIC_LIVELINESS_QOS", "1000");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "AUTOMATIC_LIVELINESS_QOS", "1000");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "MANUAL_BY_PARTICIPANT_LIVELINESS_QOS", "1000");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "MANUAL_BY_PARTICIPANT_LIVELINESS_QOS", "1000");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "1000");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "1000");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "INF");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "INF");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "0");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "0");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
@@ -420,18 +424,19 @@ TEST_F(XMLEndpointParserTests, loadXMLReaderEndpoint)
                     <ownershipQos kind=\"%s\"/>\
                 </reader>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id,  "SHARED_OWNERSHIP_QOS");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id,  "SHARED_OWNERSHIP_QOS");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLReaderEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "EXCLUSIVE_OWNERSHIP_QOS");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "EXCLUSIVE_OWNERSHIP_QOS");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLReaderEndpoint(titleElement, pdata));
@@ -455,13 +460,14 @@ TEST_F(XMLEndpointParserTests, loadXMLReaderEndpoint)
                     <%s>bad_value</%s>\
                 </reader>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         std::vector<std::string> content_tags =
         {
             "userId",
             "entityID",
-            "expectsInlineQos",
+            "expects_inline_qos",
             "topicName",
             "topicDataType",
             "topicKind",
@@ -474,7 +480,7 @@ TEST_F(XMLEndpointParserTests, loadXMLReaderEndpoint)
 
         for (const std::string& tag : content_tags)
         {
-            sprintf(xml, xml_content, tag.c_str(), tag.c_str());
+            snprintf(xml, xml_len, xml_content, tag.c_str(), tag.c_str());
             ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
             titleElement = xml_doc.FirstChildElement();
             EXPECT_EQ(XMLP_ret::XML_ERROR, mp_edpXML->loadXMLReaderEndpoint(titleElement, pdata));
@@ -491,7 +497,8 @@ TEST_F(XMLEndpointParserTests, loadXMLReaderEndpoint)
                     <%s bad_attribute=\"bad_value\"/>\
                 </reader>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         std::vector<std::string> attribute_tags =
         {
@@ -504,7 +511,7 @@ TEST_F(XMLEndpointParserTests, loadXMLReaderEndpoint)
 
         for (const std::string& tag : attribute_tags)
         {
-            sprintf(xml, xml_attribute, tag.c_str());
+            snprintf(xml, xml_len, xml_attribute, tag.c_str());
             ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
             titleElement = xml_doc.FirstChildElement();
             EXPECT_EQ(XMLP_ret::XML_ERROR, mp_edpXML->loadXMLReaderEndpoint(titleElement, pdata));
@@ -538,7 +545,7 @@ TEST_F(XMLEndpointParserTests, loadXMLWriterEndpoint)
                 <writer>\
                     <userId>3</userId>\
                     <entityID>4</entityID>\
-                    <expectsInlineQos>true</expectsInlineQos>\
+                    <expects_inline_qos>true</expects_inline_qos>\
                     <topicName>HelloWorldTopic</topicName>\
                     <topicDataType>HelloWorld</topicDataType>\
                     <topicKind>NO_KEY</topicKind>\
@@ -582,10 +589,10 @@ TEST_F(XMLEndpointParserTests, loadXMLWriterEndpoint)
         EXPECT_EQ(pdata->m_writers[0]->remote_locators().multicast[0],  multi_loc);
 
         // qos
-        EXPECT_EQ(pdata->m_writers[0]->m_qos.m_reliability.kind,  BEST_EFFORT_RELIABILITY_QOS);
-        EXPECT_EQ(pdata->m_writers[0]->m_qos.m_durability.kind,  VOLATILE_DURABILITY_QOS);
-        EXPECT_EQ(pdata->m_writers[0]->m_qos.m_ownership.kind,  SHARED_OWNERSHIP_QOS);
-        EXPECT_EQ(pdata->m_writers[0]->m_qos.m_liveliness.kind,  AUTOMATIC_LIVELINESS_QOS);
+        EXPECT_EQ(pdata->m_writers[0]->m_qos.m_reliability.kind,  dds::BEST_EFFORT_RELIABILITY_QOS);
+        EXPECT_EQ(pdata->m_writers[0]->m_qos.m_durability.kind,  dds::VOLATILE_DURABILITY_QOS);
+        EXPECT_EQ(pdata->m_writers[0]->m_qos.m_ownership.kind,  dds::SHARED_OWNERSHIP_QOS);
+        EXPECT_EQ(pdata->m_writers[0]->m_qos.m_liveliness.kind,  dds::AUTOMATIC_LIVELINESS_QOS);
         EXPECT_TRUE(pdata->m_writers[0]->m_qos.m_disablePositiveACKs.enabled);
         EXPECT_EQ(pdata->m_writers[0]->m_qos.m_disablePositiveACKs.duration.seconds, 300);
         EXPECT_EQ(pdata->m_writers[0]->m_qos.m_disablePositiveACKs.duration.nanosec, 0u);
@@ -608,39 +615,40 @@ TEST_F(XMLEndpointParserTests, loadXMLWriterEndpoint)
                     <livelinessQos kind=\"%s\" leaseDuration_ms=\"%s\"/>\
                 </writer>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "AUTOMATIC_LIVELINESS_QOS", "1000");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "AUTOMATIC_LIVELINESS_QOS", "1000");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "MANUAL_BY_PARTICIPANT_LIVELINESS_QOS", "1000");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "MANUAL_BY_PARTICIPANT_LIVELINESS_QOS", "1000");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "1000");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "1000");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "INF");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "INF");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "0");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "MANUAL_BY_TOPIC_LIVELINESS_QOS", "0");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
@@ -666,18 +674,19 @@ TEST_F(XMLEndpointParserTests, loadXMLWriterEndpoint)
                     <ownershipQos kind=\"%s\"/>\
                 </writer>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id,  "SHARED_OWNERSHIP_QOS");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id,  "SHARED_OWNERSHIP_QOS");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
 
         user_id += 2;
         entity_id += 2;
-        sprintf(xml, xml_p, user_id, entity_id, "EXCLUSIVE_OWNERSHIP_QOS");
+        snprintf(xml, xml_len, xml_p, user_id, entity_id, "EXCLUSIVE_OWNERSHIP_QOS");
         ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
         titleElement = xml_doc.FirstChildElement();
         EXPECT_EQ(XMLP_ret::XML_OK, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
@@ -701,13 +710,14 @@ TEST_F(XMLEndpointParserTests, loadXMLWriterEndpoint)
                     <%s>bad_value</%s>\
                 </writer>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         std::vector<std::string> content_tags =
         {
             "userId",
             "entityID",
-            "expectsInlineQos",
+            "expects_inline_qos",
             "topicName",
             "topicDataType",
             "topicKind",
@@ -722,7 +732,7 @@ TEST_F(XMLEndpointParserTests, loadXMLWriterEndpoint)
 
         for (const std::string& tag : content_tags)
         {
-            sprintf(xml, xml_content, tag.c_str(), tag.c_str());
+            snprintf(xml, xml_len, xml_content, tag.c_str(), tag.c_str());
             ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
             titleElement = xml_doc.FirstChildElement();
             EXPECT_EQ(XMLP_ret::XML_ERROR, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));
@@ -740,7 +750,8 @@ TEST_F(XMLEndpointParserTests, loadXMLWriterEndpoint)
                     <%s bad_attribute=\"bad_value\"/>\
                 </writer>\
                 ";
-        char xml[500];
+        constexpr size_t xml_len {500};
+        char xml[xml_len];
 
         std::vector<std::string> attribute_tags =
         {
@@ -753,7 +764,7 @@ TEST_F(XMLEndpointParserTests, loadXMLWriterEndpoint)
 
         for (const std::string& tag : attribute_tags)
         {
-            sprintf(xml, xml_attribute, tag.c_str());
+            snprintf(xml, xml_len, xml_attribute, tag.c_str());
             ASSERT_EQ(tinyxml2::XMLError::XML_SUCCESS, xml_doc.Parse(xml));
             titleElement = xml_doc.FirstChildElement();
             EXPECT_EQ(XMLP_ret::XML_ERROR, mp_edpXML->loadXMLWriterEndpoint(titleElement, pdata));

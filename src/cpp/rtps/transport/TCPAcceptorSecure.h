@@ -15,6 +15,8 @@
 #ifndef _FASTDDS_TCP_ACCEPTOR_SECURE_
 #define _FASTDDS_TCP_ACCEPTOR_SECURE_
 
+#define OPENSSL_API_COMPAT 10101
+
 #include <asio/ssl.hpp>
 #include <rtps/transport/TCPAcceptor.h>
 #include <rtps/transport/TCPChannelResourceSecure.h>
@@ -44,12 +46,12 @@ public:
     /**
      * Constructor
      * @param io_service Reference to the ASIO service.
-     * @param interface Network interface to bind the socket
+     * @param iface Network interface to bind the socket
      * @param locator Locator with the information about where to accept connections.
      */
     TCPAcceptorSecure(
             asio::io_service& io_service,
-            const std::string& interface,
+            const std::string& iface,
             const Locator& locator);
 
     /**

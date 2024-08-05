@@ -19,13 +19,13 @@
 #ifndef _SECURITY_AUTHENTICATION_PKIDH_H_
 #define _SECURITY_AUTHENTICATION_PKIDH_H_
 
-#include <fastdds/rtps/security/authentication/Authentication.h>
-#include <fastdds/rtps/attributes/PropertyPolicy.h>
-#include <security/authentication/PKIHandshakeHandle.h>
+#include <fastdds/rtps/attributes/PropertyPolicy.hpp>
+#include <rtps/security/authentication/Authentication.h>
 #include <security/artifact_providers/Pkcs11Provider.hpp>
+#include <security/authentication/PKIHandshakeHandle.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -71,9 +71,9 @@ public:
             HandshakeHandle& handshake_handle,
             SecurityException& exception) override;
 
-    SharedSecretHandle* get_shared_secret(
+    std::shared_ptr<SecretHandle> get_shared_secret(
             const HandshakeHandle& handshake_handle,
-            SecurityException& exception) override;
+            SecurityException& exception) const override;
 
     bool set_listener(
             AuthenticationListener* listener,
@@ -92,13 +92,16 @@ public:
             HandshakeHandle* handshake_handle,
             SecurityException& exception) override;
 
+    IdentityHandle* get_identity_handle(
+            SecurityException& exception) override;
+
     bool return_identity_handle(
             IdentityHandle* identity_handle,
             SecurityException& exception) override;
 
     bool return_sharedsecret_handle(
-            SharedSecretHandle* sharedsecret_handle,
-            SecurityException& exception) override;
+            std::shared_ptr<SecretHandle>& sharedsecret_handle,
+            SecurityException& exception) const override;
 
     bool set_permissions_credential_and_token(
             IdentityHandle& identity_handle,
@@ -113,6 +116,11 @@ public:
     bool return_authenticated_peer_credential_token(
             PermissionsCredentialToken* token,
             SecurityException& ex) override;
+
+    bool check_guid_comes_from(
+            IdentityHandle* identity_handle,
+            const GUID_t& adjusted,
+            const GUID_t& original) override;
 
     std::unique_ptr<detail::Pkcs11Provider> pkcs11_provider;
 
@@ -130,11 +138,15 @@ private:
             PKIHandshakeHandle& handshake_handle,
             SecurityException& exception);
 
+    std::shared_ptr<SecretHandle> generate_sharedsecret(
+            EVP_PKEY* private_key,
+            EVP_PKEY* public_key,
+            SecurityException& exception) const;
 };
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
 #endif // _SECURITY_AUTHENTICATION_PKIDH_H_

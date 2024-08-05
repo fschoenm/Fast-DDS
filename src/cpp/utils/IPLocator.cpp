@@ -22,11 +22,11 @@
 
 #include <asio.hpp>
 
-#include <fastrtps/utils/IPLocator.h>
-#include <fastrtps/utils/IPFinder.h>
+#include <fastdds/utils/IPLocator.hpp>
+#include <fastdds/utils/IPFinder.hpp>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 static const std::regex IPv4_REGEX("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}"
@@ -68,7 +68,7 @@ bool IPLocator::setIPv4(
 {
     if (locator.kind != LOCATOR_KIND_TCPv4 && locator.kind != LOCATOR_KIND_UDPv4)
     {
-        logWarning(IP_LOCATOR, "Trying to set an IPv4 in a non IPv4 Locator");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Trying to set an IPv4 in a non IPv4 Locator");
         return false;
     }
     memcpy(&locator.address[12], addr, 4 * sizeof(char));
@@ -84,7 +84,7 @@ bool IPLocator::setIPv4(
 {
     if (locator.kind != LOCATOR_KIND_TCPv4 && locator.kind != LOCATOR_KIND_UDPv4)
     {
-        logWarning(IP_LOCATOR, "Trying to set an IPv4 in a non IPv4 Locator");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Trying to set an IPv4 in a non IPv4 Locator");
         return false;
     }
     locator.address[12] = o1;
@@ -100,7 +100,7 @@ bool IPLocator::setIPv4(
 {
     if (locator.kind != LOCATOR_KIND_TCPv4 && locator.kind != LOCATOR_KIND_UDPv4)
     {
-        logWarning(IP_LOCATOR, "Trying to set an IPv4 in a non IPv4 Locator");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Trying to set an IPv4 in a non IPv4 Locator");
         return false;
     }
     // This function do not set address to 0 in case it fails
@@ -127,7 +127,7 @@ bool IPLocator::setIPv4(
         // If there are more info to read, it fails
         return ss.rdbuf()->in_avail() == 0;
     }
-    logWarning(IP_LOCATOR, "IPv4 " << ipv4 << " error format. Expected X.X.X.X");
+    EPROSIMA_LOG_WARNING(IP_LOCATOR, "IPv4 " << ipv4 << " error format. Expected X.X.X.X");
     return false;
 }
 
@@ -137,7 +137,7 @@ bool IPLocator::setIPv4(
 {
     if (destlocator.kind != LOCATOR_KIND_TCPv4 && destlocator.kind != LOCATOR_KIND_UDPv4)
     {
-        logWarning(IP_LOCATOR, "Trying to set an IPv4 in a non IPv4 Locator");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Trying to set an IPv4 in a non IPv4 Locator");
         return false;
     }
     return setIPv4(destlocator, getIPv4(origlocator));
@@ -185,7 +185,7 @@ bool IPLocator::setIPv6(
 {
     if (locator.kind != LOCATOR_KIND_TCPv6 && locator.kind != LOCATOR_KIND_UDPv6)
     {
-        logWarning(IP_LOCATOR, "Trying to set an IPv6 in a non IPv6 Locator");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Trying to set an IPv6 in a non IPv6 Locator");
         return false;
     }
     memcpy(locator.address, addr, 16 * sizeof(char));
@@ -205,7 +205,7 @@ bool IPLocator::setIPv6(
 {
     if (locator.kind != LOCATOR_KIND_TCPv6 && locator.kind != LOCATOR_KIND_UDPv6)
     {
-        logWarning(IP_LOCATOR, "Trying to set an IPv6 in a non IPv6 Locator");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Trying to set an IPv6 in a non IPv6 Locator");
         return false;
     }
     locator.address[0] = (octet)(group0 >> 8);
@@ -250,13 +250,13 @@ bool IPLocator::setIPv6(
      * */
     if (locator.kind != LOCATOR_KIND_TCPv6 && locator.kind != LOCATOR_KIND_UDPv6)
     {
-        logWarning(IP_LOCATOR, "Trying to set an IPv6 in a non IPv6 Locator");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Trying to set an IPv6 in a non IPv6 Locator");
         return false;
     }
 
     if (!IPv6isCorrect(ipv6))
     {
-        logWarning(IP_LOCATOR, "IPv6 " << ipv6 << " is not well defined");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "IPv6 " << ipv6 << " is not well defined");
         return false;
     }
 
@@ -343,7 +343,7 @@ bool IPLocator::setIPv6(
             ss >> punct >> input_aux;
             if (input_aux >= 65536)
             {
-                logWarning(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
+                EPROSIMA_LOG_WARNING(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
                 return false;
             }
             locator.address[i++] = octet(input_aux >> 8);
@@ -364,7 +364,7 @@ bool IPLocator::setIPv6(
             ss >> input_aux >> punct;
             if (input_aux >= 65536)
             {
-                logWarning(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
+                EPROSIMA_LOG_WARNING(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
                 return false;
             }
             locator.address[i++] = octet(input_aux >> 8);
@@ -386,7 +386,7 @@ bool IPLocator::setIPv6(
             ss >> input_aux >> punct;
             if (input_aux >= 65536)
             {
-                logWarning(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
+                EPROSIMA_LOG_WARNING(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
                 return false;
             }
             locator.address[i++] = octet(input_aux >> 8);
@@ -403,7 +403,7 @@ bool IPLocator::setIPv6(
             ss >> punct >> input_aux;
             if (input_aux >= 65536)
             {
-                logWarning(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
+                EPROSIMA_LOG_WARNING(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
                 return false;
             }
             locator.address[i++] = octet(input_aux >> 8);
@@ -421,7 +421,7 @@ bool IPLocator::setIPv6(
             ss >> punct >> input_aux;
             if (input_aux >= 65536)
             {
-                logWarning(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
+                EPROSIMA_LOG_WARNING(IP_LOCATOR, "IPv6 " << ipv6 << " has values higher than expected (65536)");
                 return false;
             }
             locator.address[i++] = octet(input_aux >> 8);
@@ -438,7 +438,7 @@ bool IPLocator::setIPv6(
 {
     if (destlocator.kind != LOCATOR_KIND_TCPv6 && destlocator.kind != LOCATOR_KIND_UDPv6)
     {
-        logWarning(IP_LOCATOR, "Trying to set an IPv6 in a non IPv6 Locator");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Trying to set an IPv6 in a non IPv6 Locator");
         return false;
     }
     return setIPv6(destlocator, getIPv6(origlocator));
@@ -711,6 +711,17 @@ std::string IPLocator::toWanstring(
        << (int)locator.address[10] << "."
        << (int)locator.address[11];
     return ss.str();
+}
+
+Locator_t IPLocator::WanToLanLocator(
+        const Locator_t& locator)
+{
+    Locator_t out(locator);
+
+    std::memcpy(out.address + 12, out.address + 8, 4 * sizeof(octet));
+    std::memset(out.address + 8, 0, 4 * sizeof(octet));
+
+    return out;
 }
 
 bool IPLocator::setLanID(
@@ -1095,14 +1106,15 @@ std::pair<std::set<std::string>, std::set<std::string>> IPLocator::resolveNameDN
     if (ec)
     {
         // Failed to resolve the DNS name. Breaking execution.
-        logWarning(IP_LOCATOR, "Error " << ec.message() << " when execution the DNS request");
+        EPROSIMA_LOG_WARNING(IP_LOCATOR, "Error " << ec.message() << " when execution the DNS request");
         return std::make_pair(ipv4_results, ipv6_results);
     }
 
     asio::ip::tcp::resolver::iterator end_it;
     for (; it != end_it; ++it)
     {
-        logInfo(IP_LOCATOR, "IP " << it->endpoint().address() << " found by DNS request to address " << address_name);
+        EPROSIMA_LOG_INFO(IP_LOCATOR,
+                "IP " << it->endpoint().address() << " found by DNS request to address " << address_name);
 
         // Check whether the ip get is v4 or v6
         if (it->endpoint().address().is_v4())
@@ -1131,5 +1143,5 @@ bool IPLocator::isIPv6(
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

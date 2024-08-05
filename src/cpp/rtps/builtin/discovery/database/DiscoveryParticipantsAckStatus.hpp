@@ -25,7 +25,7 @@
 
 #include <fastdds/rtps/common/GuidPrefix_t.hpp>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -41,39 +41,35 @@ class DiscoveryParticipantsAckStatus
 
 public:
 
-    DiscoveryParticipantsAckStatus()
-    {
-    }
+    DiscoveryParticipantsAckStatus() = default;
 
-    ~DiscoveryParticipantsAckStatus()
-    {
-    }
+    ~DiscoveryParticipantsAckStatus() = default;
 
     void add_or_update_participant(
-            const eprosima::fastrtps::rtps::GuidPrefix_t& guid_p,
+            const GuidPrefix_t& guid_p,
             bool status);
 
     void remove_participant(
-            const eprosima::fastrtps::rtps::GuidPrefix_t& guid_p);
+            const GuidPrefix_t& guid_p);
 
     void unmatch_all();
 
     bool is_matched(
-            const eprosima::fastrtps::rtps::GuidPrefix_t& guid_p) const;
+            const GuidPrefix_t& guid_p) const;
 
     bool is_relevant_participant(
-            const eprosima::fastrtps::rtps::GuidPrefix_t& guid_p) const;
+            const GuidPrefix_t& guid_p) const;
 
     bool is_acked_by_all() const;
 
-    std::vector<eprosima::fastrtps::rtps::GuidPrefix_t> relevant_participants() const;
+    std::vector<GuidPrefix_t> relevant_participants() const;
 
     void to_json(
             nlohmann::json& j) const;
 
 private:
 
-    std::map<eprosima::fastrtps::rtps::GuidPrefix_t, bool> relevant_participants_map_;
+    std::map<GuidPrefix_t, bool> relevant_participants_map_;
 };
 
 } /* namespace ddb */

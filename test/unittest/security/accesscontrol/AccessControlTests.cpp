@@ -12,25 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <security/OpenSSLInit.hpp>
-
-#include <fastrtps/rtps/builtin/data/ParticipantProxyData.h>
-#include <fastrtps/rtps/builtin/data/WriterProxyData.h>
-#include <fastrtps/rtps/builtin/data/ReaderProxyData.h>
-
-#include <fastrtps/rtps/messages/CDRMessage.h>
-#include <security/authentication/PKIDH.h>
-#include <security/authentication/PKIIdentityHandle.h>
-#include <security/authentication/PKIHandshakeHandle.h>
-#include <security/accesscontrol/Permissions.h>
-#include <security/accesscontrol/AccessPermissionsHandle.h>
+#include <iostream>
 
 #include <gtest/gtest.h>
 
-#include <iostream>
+#include <rtps/builtin/data/ParticipantProxyData.hpp>
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <rtps/messages/CDRMessage.hpp>
+#include <security/accesscontrol/AccessPermissionsHandle.h>
+#include <security/accesscontrol/Permissions.h>
+#include <security/authentication/PKIDH.h>
+#include <security/authentication/PKIHandshakeHandle.h>
+#include <security/authentication/PKIIdentityHandle.h>
+#include <security/OpenSSLInit.hpp>
 
-using namespace eprosima::fastrtps::rtps;
-using namespace eprosima::fastrtps::rtps::security;
+using namespace eprosima::fastdds::rtps;
+using namespace eprosima::fastdds::rtps::security;
 
 static const char* certs_path = nullptr;
 
@@ -50,7 +48,7 @@ protected:
 
     AccessControlTest()
     {
-        static eprosima::fastrtps::rtps::security::OpenSSLInit openssl_init;
+        static eprosima::fastdds::rtps::security::OpenSSLInit openssl_init;
     }
 
     void fill_common_participant_security_attributes(
@@ -62,7 +60,8 @@ protected:
 
     void get_access_handle(
             const RTPSParticipantAttributes& participant_attr,
-            PermissionsHandle** access_handle);
+            PermissionsHandle** access_handle,
+            bool should_success = true);
     void fill_candidate_participant_key();
 
     GUID_t candidate_participant_key;
@@ -159,7 +158,8 @@ void AccessControlTest::fill_common_participant_security_attributes(
 
 void AccessControlTest::get_access_handle(
         const RTPSParticipantAttributes& participant_attr,
-        PermissionsHandle** access_handle)
+        PermissionsHandle** access_handle,
+        bool should_success)
 {
     IdentityHandle* identity_handle = nullptr;
 
@@ -186,7 +186,8 @@ void AccessControlTest::get_access_handle(
         participant_attr,
         exception);
 
-    ASSERT_TRUE(*access_handle != nullptr) << exception.what();
+    bool success = *access_handle != nullptr;
+    ASSERT_EQ(success, should_success) << exception.what();
     ASSERT_TRUE(authentication_plugin.return_identity_handle(identity_handle, exception)) << exception.what();
 }
 
@@ -227,7 +228,7 @@ void AccessControlTest::check_remote_datareader(
     SecurityException exception;
 
     ReaderProxyData reader_proxy_data(1, 1);
-    reader_proxy_data.topicName(eprosima::fastrtps::string_255(topic_name));
+    reader_proxy_data.topicName(eprosima::fastcdr::string_255(topic_name));
     reader_proxy_data.m_qos.m_partition.setNames(partitions);
     bool relay_only;
     bool result = access_plugin.check_remote_datareader(
@@ -285,7 +286,7 @@ void AccessControlTest::check_remote_datawriter(
     SecurityException exception;
 
     WriterProxyData writer_proxy_data(1, 1);
-    writer_proxy_data.topicName(eprosima::fastrtps::string_255(topic_name));
+    writer_proxy_data.topicName(eprosima::fastcdr::string_255(topic_name));
     writer_proxy_data.m_qos.m_partition.setNames(partitions);
     bool result = access_plugin.check_remote_datawriter(
         *access_handle,
@@ -448,18 +449,36 @@ TEST_F(AccessControlTest, validate_partition_access_ok_on_permission_wildcards)
     check_remote_datawriter(publisher_participant_attr, true);
 }
 
+/* Regression test for Redmine 17099 (Github 3239).
+ *
+ * Using a modified permissions file signed with the subscriber identity certificate should fail.
+ */
+TEST_F(AccessControlTest, validate_fail_on_self_signed_permissions)
+{
+    permissions_file = "permissions_access_control_tests_malicious.smime";
+
+    RTPSParticipantAttributes subscriber_participant_attr;
+    fill_subscriber_participant_security_attributes(subscriber_participant_attr);
+
+    PermissionsHandle* access_handle;
+    get_access_handle(subscriber_participant_attr, &access_handle, false);
+}
+
 int main(
         int argc,
         char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
 
-    certs_path = std::getenv("CERTS_PATH");
-
-    if (certs_path == nullptr)
+    if (!::testing::GTEST_FLAG(list_tests))
     {
-        std::cout << "Cannot get enviroment variable CERTS_PATH" << std::endl;
-        exit(-1);
+        certs_path = std::getenv("CERTS_PATH");
+
+        if (certs_path == nullptr)
+        {
+            std::cout << "Cannot get enviroment variable CERTS_PATH" << std::endl;
+            exit(-1);
+        }
     }
 
     return RUN_ALL_TESTS();
