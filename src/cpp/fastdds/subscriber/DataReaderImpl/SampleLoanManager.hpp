@@ -173,6 +173,12 @@ struct SampleLoanManager
             item->payload.data = nullptr;
             item->owner = nullptr;
 
+            // Reset sample if necessary
+            if (!is_plain_)
+            {
+                item->sample = type_->createData();
+            }
+
             item = free_loans_.push_back(*item);
             assert(nullptr != item);
             used_loans_.remove(*item);
